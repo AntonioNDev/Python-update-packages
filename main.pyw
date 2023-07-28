@@ -1,32 +1,20 @@
 from tkinter import *
+from tkinter import ttk
 import subprocess
 import threading
 import re
 
-window = Tk()
-window.title("Python update - packages")
 
-appWidth = 500
-appHeight = 500
-
-screen_w = window.winfo_screenwidth()
-screen_h = window.winfo_screenheight()
-
-x = (screen_w / 2) - (appWidth) + 250
-y = (screen_h / 2) - (appHeight) + 250
-
-window.geometry(f'{appWidth}x{appHeight}+{int(x)}+{int(y)}')
 
 outdated_packages = []
 
-def get_outdated_packages():
+""" def get_outdated_packages():
    outdated_packages.clear()
    def get_outdated_packages_worker():
       global outdated_packages, countPackages
 
       try:
          result = subprocess.run(['pip3', 'list', '--outdated'], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-
          if result.returncode == 0:
             package_lines = result.stdout.strip().split('\n')[2:]
             for line in package_lines:
@@ -74,7 +62,7 @@ def update_packages():
       try:
          threads = []
          for package in outdated_packages:
-               thread = threading.Thread(target=update_package, args=(package,)).start()
+               thread = threading.Thread(target=update_package, args=(package,))
                threads.append(thread)
                thread.start()
 
@@ -94,37 +82,88 @@ def update_packages():
 
    # Start the function in a separate thread
    threading.Thread(target=update_packages_worker).start()
+ """
+
+class AppFunc:
+   ...
 
 
-def setupGUI():
-   global dataTopFrame, checkUpdates, updateAll
+class AppGUI:
+   def __init__(self): 
 
-   dataTopFrame = Frame(window, relief='sunken', height=400, width=500, border=3)
-   dataTopFrame.pack(side=TOP)
+      self.window = Tk()
+      self.window.title("Python update - packages")
 
-   optionsButtomFrame = Frame(window, relief='groove', height=250, width=500, border=2)
-   optionsButtomFrame.pack(side=BOTTOM)
-
-   buttonsGrid = Frame(optionsButtomFrame, relief='raised', height=125, width=500, border=3)
-   buttonsGrid.grid(row=0, column=0)
-
-   checkUpdates = Button(buttonsGrid, text='Check for updates', border=4, relief='sunken', cursor='hand2', font=('San Serif', 13), fg='black', bg='grey', command=get_outdated_packages)
-   updateAll = Button(buttonsGrid, text='Update All', border=4,relief='sunken', cursor='hand2', font=('San Serif', 13), fg='black', bg='grey' , command=update_packages)
-
-   checkUpdates.grid(row=0, column=0, pady='10', padx='80')
-   updateAll.grid(row=0, column=1, pady='10', padx='10')
-
-   dataTopFrame.pack_propagate(False)
-   optionsButtomFrame.pack_propagate(False)
-   buttonsGrid.grid_propagate(False)
+      self.appWidth = 950
+      self.appHeight = 650
+      self.screen_w = self.window.winfo_screenwidth()
+      self.screen_h = self.window.winfo_screenheight()
 
 
+      x = (self.screen_w / 2) - (self.appWidth / 2)
+      y = (self.screen_h / 2) - (self.appHeight / 2)
+      self.window.geometry(f'{self.appWidth}x{self.appHeight}+{int(x)}+{int(y)}')
 
-def main():
-   setupGUI()
-   window.bind('<Button>', lambda event: event.widget.focus_set())
-   window.resizable(False, False)
-   window.mainloop()
+      self.setupGUI()
+      self.window.mainloop()
+   
+   def setupGUI(self):
+      #Main Frame
+      topMainFrame = Frame(self.window, relief=None, height=450, width=self.appWidth, bg='red')
+      topMainFrame.grid(row=0, column=0, sticky='nsew')
+      self.window.grid_rowconfigure(0, weight=1)
+      self.window.grid_columnconfigure(0, weight=1)
+
+      #Bottom Frame
+      bottomMainFrame = Frame(self.window, relief=None, height=200, width=self.appWidth, bg='yellow')
+      bottomMainFrame.grid(row=1, column=0, sticky='nsew')
+      self.window.grid_rowconfigure(1, weight=0)
+      self.window.grid_columnconfigure(0, weight=1)
+
+      #Treeview frame
+      tree_frame = Frame(topMainFrame)
+      tree_frame.grid(row=0, column=0, sticky='nsew')
+      topMainFrame.grid_columnconfigure(0, weight=1)
+      topMainFrame.grid_rowconfigure(0, weight=1)
+
+      tree_scroll = Scrollbar(tree_frame)
+      tree_scroll.pack(side=RIGHT, fill=Y)
+      
+      style = ttk.Style()
+      style.theme_use("clam")  
+      style.configure("Treeview",
+         background="white",
+         foreground="#231942",
+         rowheight=25,
+         fieldbackground="white"
+      )
+
+      my_tree = ttk.Treeview(tree_frame, yscrollcommand=tree_scroll.set)
+      my_tree.pack(fill='both', expand=True)
+
+      tree_scroll.config(command=my_tree.yview)
+
+      my_tree['columns'] = ("Name", "Version")
+
+      my_tree.column("#0", width=0, stretch=NO)
+      my_tree.column("Name", anchor=CENTER, width=50)
+      my_tree.column("Version", anchor=CENTER, width=50)
+   
+      my_tree.heading("#0", text='', anchor=W)
+      my_tree.heading("Name", text="Name", anchor=CENTER)
+      my_tree.heading("Version", text="Version", anchor=CENTER)
+
+      #Console Frame
+      consoleFrame = Frame(topMainFrame, relief=None, width=self.appWidth * 0.1, bg='green')
+      consoleFrame.grid(row=0, column=1, sticky='nsew')
+      topMainFrame.grid_columnconfigure(1, weight=7)  #70% width of the top frame
+      topMainFrame.grid_rowconfigure(0, weight=1)     #responsive height for the console frame
+
+      #Column configuration for topMainFrame to make consoleFrame 70% width
+      topMainFrame.grid_columnconfigure(1, weight=3)
+      topMainFrame.grid_columnconfigure(0, weight=1)
+
+
 
 if __name__ == "__main__":
-   main()
+   AppGUI()

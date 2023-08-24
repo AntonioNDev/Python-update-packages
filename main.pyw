@@ -48,7 +48,8 @@ class AppFunc:
       checkForUpdates.config(state="disabled", fg='white', text='Searching...', bg='white')
 
       # Start the function in a separate thread
-      threading.Thread(target=get_outdated_packages_worker).start()
+      threading.Thread(target=get_outdated_packages_worker, daemon=True).start()
+
 
    @classmethod
    def update_package(cls, package):
@@ -76,27 +77,33 @@ class AppFunc:
             entry_package.delete(0, 'end')
             update.config(state="disabled", text='Updating', fg='white', bg='white')
 
-      elif isinstance(package, list):  #Update multiple packages
+
+      elif isinstance(package, list):  # Update multiple packages
             threads = []
             packageName = Label(labels_frame, text=f'Updating packages, this might take a while, please wait.', fg='black', bg='#d9dadd', font=('San Serif', 11))
             packageName.pack(side='top', padx=10, pady=10, anchor='w')
 
-            for pkg in package:
-               thread = threading.Thread(target=update_single_package, args=(pkg,))
+            packages_to_update = list(cls.outdated_packages)  # Create a copy of the list
+
+            for pkg in packages_to_update:
+               thread = threading.Thread(target=update_single_package, args=(pkg,), daemon=True)
                threads.append(thread)
                thread.start()
 
-               cls.outdated_packages.remove(pkg)
-               countPackages.config(text=f'Packages to update: {len(cls.outdated_packages)}')
-
             for thread in threads:
                thread.join()
+
+            # Now remove the updated packages from the main list
+            for pkg in packages_to_update:
+               cls.outdated_packages.remove(pkg)
+            
+            countPackages.config(text=f'Packages to update: {len(cls.outdated_packages)}')
 
    @classmethod
    def update_packages(cls, self):
       def update_packages_worker():
          try:
-               thread = threading.Thread(target=cls.update_package, args=(cls.outdated_packages,))
+               thread = threading.Thread(target=cls.update_package, args=(cls.outdated_packages,), daemon=True)
                thread.start()
 
          except Exception as e:
@@ -111,6 +118,7 @@ class AppFunc:
 
       # Start the function in a separate thread
       threading.Thread(target=update_packages_worker).start()
+
 
    @classmethod
    def display_all_packages(cls, self):
@@ -151,7 +159,7 @@ class AppFunc:
       displayAll.config(state="disabled", fg='white', text='Processing...', bg='white')
 
       #Start the function in a separate thread
-      threading.Thread(target=display_all_packages_worker).start()
+      threading.Thread(target=display_all_packages_worker, daemon=True).start()
 
    @classmethod
    def uninstall_package(cls, package):
